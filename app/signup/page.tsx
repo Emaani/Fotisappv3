@@ -4,6 +4,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaGoogle, FaFacebook } from "react-icons/fa";
+import { signIn } from "next-auth/react";
 
 interface SignUpFormData {
   email: string;
@@ -70,6 +71,8 @@ const SignUpPage = () => {
       });
 
       localStorage.setItem("userId", response.data.userId);
+      localStorage.setItem("token", response.data.token);
+      
       router.push("/ProfileSetup");
     } catch (error: any) {
       setError(error.response?.data?.message || "An error occurred during signup");
@@ -78,9 +81,26 @@ const SignUpPage = () => {
     }
   };
 
-  const handleSocialSignup = (provider: "google" | "facebook") => {
-    console.log(`${provider} signup clicked`);
-    // Implement social sign-up logic here
+  const handleSocialSignup = async (provider: "google" | "facebook") => {
+    try {
+      setIsLoading(true);
+      const result = await signIn(provider, {
+        callbackUrl: '/ProfileSetup',
+        redirect: false,
+      });
+
+      if (result?.error) {
+        console.error('Social sign-in error:', result.error);
+        setError(`Failed to sign in with ${provider}: ${result.error}`);
+      } else if (result?.url) {
+        router.push(result.url);
+      }
+    } catch (error) {
+      console.error(`${provider} sign-in error:`, error);
+      setError(`An error occurred during ${provider} sign-in`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

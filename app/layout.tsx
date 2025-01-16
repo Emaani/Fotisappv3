@@ -6,6 +6,7 @@ import { ThemeProvider } from './providers/ThemeProvider';
 import Header from './components/Header';
 import BackgroundContainer from './components/BackgroundContainer';
 import { Suspense } from 'react';
+import { AuthProvider } from "./providers/AuthProvider";
 
 const inter = Inter({ subsets: ['latin'] });
 const roboto = Roboto({ 
@@ -23,17 +24,19 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning className={`${roboto.variable}`}>
         <ThemeProvider>
-          <BackgroundContainer>
-            <div className="app-layout">
-              <Suspense fallback={<div>Loading...</div>}>
-                <Header />
-              </Suspense>
-              <main className="container mx-auto">{children}</main>
-              <footer className="footer text-center p-4">
-                <p>© {new Date().getFullYear()} Fotis Agro Trading Platform</p>
-              </footer>
-            </div>
-          </BackgroundContainer>
+          <AuthProvider>
+            <BackgroundContainer>
+              <div className="app-layout">
+                <Suspense fallback={<div>Loading...</div>}>
+                  <Header />
+                </Suspense>
+                <main className="container mx-auto">{children}</main>
+                <footer className="footer text-center p-4">
+                  <p>© {new Date().getFullYear()} Fotis Agro Trading Platform</p>
+                </footer>
+              </div>
+            </BackgroundContainer>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import prisma from '@/app/lib/prisma'
 import { z } from 'zod'
 import { sendEmail, emailTemplates } from '@/app/lib/email'
+import { sign } from 'jsonwebtoken'
 
 const signupSchema = z.object({
   email: z.string().email(),
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(validatedData.password, 10)
 
-    // Create new user
+    // Create new user with profile
     const user = await prisma.user.create({
       data: {
         email: validatedData.email,
@@ -43,7 +44,14 @@ export async function POST(request: NextRequest) {
           create: {
             firstName: '',
             lastName: '',
-            phoneNumber: ''
+            phoneNumber: '',
+            currency: 'USD', // Set default currency
+          }
+        },
+        wallet: {
+          create: {
+            balance: 0.0,
+            currency: 'USD',
           }
         }
       },
@@ -54,21 +62,31 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Send welcome email
-    const { subject, html } = emailTemplates.welcomeEmail(validatedData.email)
-    const emailSent = await sendEmail({
-      to: validatedData.email,
-      subject,
-      html,
-    })
-
-    if (!emailSent) {
-      console.warn('Welcome email could not be sent to:', validatedData.email);
+    // Try to send welcome email, but don't fail if it doesn't work
+    try {
+      if (emailTemplates && emailTemplates.welcomeEmail) {
+        const { subject, html } = emailTemplates.welcomeEmail(validatedData.email)
+        await sendEmail({
+          to: validatedData.email,
+          subject,
+          html,
+        })
+      }
+    } catch (emailError) {
+      // Log the error but don't fail the signup
+      console.warn('Failed to send welcome email:', emailError)
     }
+
+    const token = sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET!,
+      { expiresIn: '24h' }
+    );
 
     return NextResponse.json({
       message: 'User created successfully',
-      userId: user.id
+      userId: user.id,
+      token
     }, { status: 201 })
 
   } catch (error) {

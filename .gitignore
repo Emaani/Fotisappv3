@@ -60,3 +60,4 @@ Thumbs.db
 
 # Vercel
 .vercel" > .gitignore
+.codegpt

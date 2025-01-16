@@ -54,7 +54,7 @@ export default function ProfileSetup() {
     setUserId(storedUserId);
   }, [router]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -106,21 +106,34 @@ export default function ProfileSetup() {
     setIsLoading(true);
 
     try {
-      if (!userId) {
-        throw new Error('User ID not found');
+      // Enhanced validation with detailed error messages
+      const requiredFields = {
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        phoneNumber: formData.phoneNumber.trim(),
+        currency: formData.currency
+      };
+
+      const emptyFields = Object.entries(requiredFields)
+        .filter(([_, value]) => !value)
+        .map(([key]) => key);
+
+      if (emptyFields.length > 0) {
+        setError(`Please fill in the following required fields: ${emptyFields.join(', ')}`);
+        setIsLoading(false);
+        return;
       }
 
+      // Create FormData object
       const formDataToSend = new FormData();
-      formDataToSend.append('userId', userId);
-      formDataToSend.append('firstName', formData.firstName);
-      formDataToSend.append('lastName', formData.lastName);
-      formDataToSend.append('phoneNumber', formData.phoneNumber);
-      if (formData.address) formDataToSend.append('address', formData.address);
-      if (formData.city) formDataToSend.append('city', formData.city);
-      if (formData.country) formDataToSend.append('country', formData.country);
-      if (formData.profilePicture) {
-        formDataToSend.append('profilePicture', formData.profilePicture);
-      }
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          formDataToSend.append(key, value.toString().trim());
+        }
+      });
+
+      // Log the data being sent
+      console.log('Sending form data:', Object.fromEntries(formDataToSend.entries()));
 
       const response = await axios.post('/api/profile/setup', formDataToSend, {
         headers: {
@@ -129,6 +142,7 @@ export default function ProfileSetup() {
       });
 
       if (response.data.success) {
+        sessionStorage.setItem("isAuthenticated", "true");
         router.push('/TradeCommodities');
       } else {
         throw new Error(response.data.message || 'Failed to update profile');
@@ -207,7 +221,7 @@ export default function ProfileSetup() {
             </div>
 
             <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
                 First Name *
               </label>
               <input
@@ -217,12 +231,22 @@ export default function ProfileSetup() {
                 required
                 value={formData.firstName}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Enter your first name"
+                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md 
+                  shadow-sm placeholder-gray-400 
+                  focus:outline-none focus:ring-blue-500 focus:border-blue-500 
+                  text-gray-900 text-base
+                  hover:border-gray-400 transition-colors"
               />
+              {formData.firstName && (
+                <p className="mt-1 text-sm text-gray-600">
+                  Entered: {formData.firstName}
+                </p>
+              )}
             </div>
 
             <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
                 Last Name *
               </label>
               <input
@@ -232,12 +256,29 @@ export default function ProfileSetup() {
                 required
                 value={formData.lastName}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Enter your last name"
+                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md 
+                  shadow-sm placeholder-gray-400 
+                  focus:outline-none focus:ring-blue-500 focus:border-blue-500 
+                  text-gray-900 text-base
+                  hover:border-gray-400 transition-colors"
               />
+              {formData.lastName && (
+                <p className="mt-1 text-sm text-gray-600">
+                  Entered: {formData.lastName}
+                </p>
+              )}
             </div>
 
+            {formData.firstName && formData.lastName && (
+              <div className="p-3 bg-gray-50 rounded-md">
+                <p className="text-sm font-medium text-gray-700">Full Name Preview:</p>
+                <p className="text-base text-gray-900">{`${formData.firstName} ${formData.lastName}`}</p>
+              </div>
+            )}
+
             <div>
-              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
                 Phone Number *
               </label>
               <input
@@ -247,12 +288,17 @@ export default function ProfileSetup() {
                 required
                 value={formData.phoneNumber}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Enter your phone number"
+                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md 
+                  shadow-sm placeholder-gray-400 
+                  focus:outline-none focus:ring-blue-500 focus:border-blue-500 
+                  text-gray-900 text-base
+                  hover:border-gray-400 transition-colors"
               />
             </div>
 
             <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
                 Address
               </label>
               <input
@@ -261,7 +307,12 @@ export default function ProfileSetup() {
                 name="address"
                 value={formData.address}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Enter your address"
+                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md 
+                  shadow-sm placeholder-gray-400 
+                  focus:outline-none focus:ring-blue-500 focus:border-blue-500 
+                  text-gray-900 text-base
+                  hover:border-gray-400 transition-colors"
               />
             </div>
 
@@ -323,9 +374,24 @@ export default function ProfileSetup() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md 
+                shadow-sm text-sm font-medium text-white bg-blue-600 
+                hover:bg-blue-700 focus:outline-none focus:ring-2 
+                focus:ring-offset-2 focus:ring-blue-500 
+                disabled:opacity-50 disabled:cursor-not-allowed
+                transition-colors"
             >
-              {isLoading ? 'Saving...' : 'Complete Profile Setup'}
+              {isLoading ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Saving...
+                </span>
+              ) : (
+                'Complete Profile Setup'
+              )}
             </button>
           </form>
         </div>
