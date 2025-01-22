@@ -1,43 +1,30 @@
-import NextAuth, { DefaultSession, NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+import NextAuth from "next-auth";
+import type { NextAuthOptions } from "next-auth";
 import FacebookProvider from "next-auth/providers/facebook";
+import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import prisma from "@/app/lib/prisma";
 
-// Extend the built-in session type
-declare module "next-auth" {
-  interface Session extends DefaultSession {
-    user: {
-      id: string;
-      email: string;
-      name?: string | null;
-    } & DefaultSession["user"]
-  }
-}
-
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  debug: process.env.NODE_ENV === 'development',
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-    }),
     FacebookProvider({
-      clientId: process.env.FACEBOOK_CLIENT_ID ?? "",
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET ?? "",
+      clientId: process.env.FACEBOOK_CLIENT_ID!,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          scope: 'email,public_profile',
+        },
+      },
+    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
-  secret: process.env.NEXTAUTH_SECRET,
-  session: {
-    strategy: 'jwt'
-  },
+  adapter: PrismaAdapter(prisma),
   callbacks: {
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
-      }
-      return session;
-    },
     async signIn({ user, account, profile }) {
       try {
         if (!user.email) return false;
@@ -52,11 +39,10 @@ export const authOptions: NextAuthOptions = {
             data: {
               email: user.email,
               name: user.name || "",
-              password: "", // Empty password for social login
               profile: {
                 create: {
-                  firstName: (profile as any)?.given_name || "",
-                  lastName: (profile as any)?.family_name || "",
+                  firstName: (profile as any)?.first_name || "",
+                  lastName: (profile as any)?.last_name || "",
                   phoneNumber: "",
                   currency: "USD",
                 }
@@ -70,17 +56,33 @@ export const authOptions: NextAuthOptions = {
             },
           });
         }
-
         return true;
       } catch (error) {
         console.error("Error in signIn callback:", error);
         return false;
       }
     },
+    async session({ session, user }) {
+      if (session.user) {
+        session.user.id = user.id;
+      }
+      return session;
+    },
   },
   pages: {
     signIn: '/login',
     error: '/auth/error',
+  },
+  cookies: {
+    sessionToken: {
+      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
 };
 

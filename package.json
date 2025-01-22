@@ -9,7 +9,14 @@
     "lint": "next lint",
     "clean": "rm -rf .next && next clean",
     "test:db": "ts-node scripts/test-db.ts",
-    "test:email": "ts-node scripts/test-email.ts"
+    "test:email": "ts-node scripts/test-email.ts",
+    "postbuild": "next-sitemap",
+    "migrate:deploy": "prisma migrate deploy",
+    "seed": "prisma db seed",
+    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "postinstall": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "prisma db seed"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
@@ -18,9 +25,12 @@
     "@emotion/styled": "^11.13.0",
     "@next-auth/prisma-adapter": "^1.0.7",
     "@prisma/client": "^5.22.0",
+    "@sentry/nextjs": "^8.51.0",
     "@types/passport": "^1.0.16",
     "@types/passport-facebook": "^3.0.3",
     "@types/passport-google-oauth20": "^2.0.16",
+    "@vercel/analytics": "^1.4.1",
+    "@vercel/postgres": "^0.10.0",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",

@@ -7,6 +7,7 @@ import Header from './components/Header';
 import BackgroundContainer from './components/BackgroundContainer';
 import { Suspense } from 'react';
 import { AuthProvider } from "./providers/AuthProvider";
+import { Analytics } from '@vercel/analytics/react';
 
 const inter = Inter({ subsets: ['latin'] });
 const roboto = Roboto({ 
@@ -36,6 +37,7 @@ export default function RootLayout({
                 </footer>
               </div>
             </BackgroundContainer>
+            <Analytics />
           </AuthProvider>
         </ThemeProvider>
       </body>
