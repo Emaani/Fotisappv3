@@ -9,14 +9,21 @@
     "lint": "next lint",
     "clean": "rm -rf .next && next clean",
     "test:db": "ts-node scripts/test-db.ts",
-    "test:email": "ts-node scripts/test-email.ts",
+    "test:email": "cross-env NODE_ENV=production ts-node --require dotenv/config scripts/test-email.ts dotenv_config_path=.env.email",
     "postbuild": "next-sitemap",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "prisma db seed",
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
     "postinstall": "prisma generate",
+    "db:init": "cross-env NODE_ENV=production ts-node --transpile-only scripts/init-db.ts",
+    "db:push": "prisma db push",
     "db:migrate": "prisma migrate deploy",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "verify:deployment": "cross-env NODE_ENV=production ts-node scripts/verify-deployment.ts",
+    "deploy:prod": "npm run pre-deploy && vercel --prod",
+    "verify:email": "cross-env NODE_ENV=production ts-node scripts/verify-email-config.ts",
+    "pre-deploy": "cross-env NODE_ENV=production ts-node scripts/pre-deploy-check.ts",
+    "generate:secret": "ts-node scripts/generate-auth-secret.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
@@ -59,7 +66,8 @@
     "sequelize": "^6.37.4",
     "ts-node": "^10.9.2",
     "validator": "^13.12.0",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "dotenv": "^16.0.3"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",
@@ -74,6 +82,7 @@
     "@types/react-dom": "^18",
     "@types/react-router-dom": "^5.3.3",
     "@types/sequelize": "^4.28.20",
+    "cross-env": "^7.0.3",
     "eslint": "^8",
     "eslint-config-next": "14.2.10",
     "postcss": "^8",

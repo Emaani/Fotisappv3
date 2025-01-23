@@ -1,17 +1,37 @@
-import { sendEmail } from '../app/lib/email';
+import { transporter, emailConfig } from '../app/lib/email-config';
+import { emailTemplates } from '../app/lib/email-templates';
 
-async function testEmail() {
+async function testEmails() {
   try {
-    const result = await sendEmail({
-      to: 'your-test-email@example.com',
-      subject: 'Test Email',
-      html: '<h1>Test Email</h1><p>This is a test email to verify SMTP configuration.</p>'
-    });
+    // Verify credentials
+    console.log('Testing email configuration...');
+    console.log('Using email:', process.env.EMAIL_USER);
+    
+    // Test SMTP connection
+    await transporter.verify();
+    console.log('✅ SMTP connection verified');
 
-    console.log('Email test result:', result);
+    // Test welcome email
+    const testAddress = process.env.EMAIL_USER;
+    const welcomeEmail = emailTemplates.welcome('Test User');
+    
+    console.log(`Sending test email to ${testAddress}...`);
+    await transporter.sendMail({
+      from: emailConfig.addresses.from,
+      to: testAddress,
+      ...welcomeEmail,
+    });
+    console.log('✅ Welcome email test successful');
+
+    console.log('✅ All email tests passed');
   } catch (error) {
-    console.error('Email test failed:', error);
+    console.error('❌ Email test failed:', error);
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.error('Missing email credentials in environment variables');
+      console.error('Please check your .env.email file');
+    }
+    process.exit(1);
   }
 }
 
-testEmail(); 
+testEmails().catch(console.error); 

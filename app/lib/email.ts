@@ -18,7 +18,7 @@ export const emailTemplates = {
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #2563eb;">Welcome to Fotis Agro!</h1>
-        <p>Dear User,</p>
+        <p>Dear ${userEmail.split('@')[0]},</p>
         <p>Thank you for joining Fotis Agro. We're excited to have you on board!</p>
         <p>To get started, please complete your profile setup.</p>
         <p>Best regards,<br>The Fotis Agro Team</p>
@@ -42,7 +42,7 @@ export const sendEmail = async ({ to, subject, html }: EmailParams): Promise<boo
     }
 
     await transporter.sendMail({
-      from: process.env.EMAIL_FROM || 'noreply@fotisagro.com',
+      from: process.env.EMAIL_FROM || 'admin@fotisagro.com',
       to,
       subject,
       html,
