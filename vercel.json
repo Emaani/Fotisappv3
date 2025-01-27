@@ -5,16 +5,21 @@
   "framework": "nextjs",
   "regions": ["fra1"],
   "env": {
-    "VERCEL_ENV": "production"
+    "VERCEL_ENV": "production",
+    "DATABASE_URL": "postgres://neondb_owner:npg_15hXdNjYbBzS@ep-orange-grass-a2fvw22i-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require",
+    "POSTGRES_PRISMA_URL": "postgres://neondb_owner:npg_15hXdNjYbBzS@ep-orange-grass-a2fvw22i-pooler.eu-central-1.aws.neon.tech/neondb?pgbouncer=true&connect_timeout=15&sslmode=require",
+    "POSTGRES_URL_NON_POOLING": "postgres://neondb_owner:npg_15hXdNjYbBzS@ep-orange-grass-a2fvw22i.eu-central-1.aws.neon.tech/neondb?sslmode=require"
   },
   "build": {
     "env": {
       "NEXT_PUBLIC_APP_URL": "https://fotisagro.com",
-      "NEXT_PUBLIC_API_URL": "https://fotisagro.com/api"
+      "NEXT_PUBLIC_API_URL": "https://fotisagro.com/api",
+      "NEXTAUTH_URL": "https://fotisagro.com",
+      "NEXTAUTH_SECRET": "48dcf0bcf8d8174bb1db70b10fe5b5b114adb9f6c389766e78af45bb11492014"
     }
   },
   "functions": {
-    "api/**": {
+    "app/api/**/*": {
       "memory": 1024,
       "maxDuration": 30
     }
@@ -38,4 +43,4 @@
       ]
     }
   ]
-} 
+}
