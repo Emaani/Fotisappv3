@@ -1,9 +1,15 @@
 import NextAuth from "next-auth";
 import type { NextAuthOptions } from "next-auth";
+import type { Profile as OAuthProfile } from "next-auth";
 import FacebookProvider from "next-auth/providers/facebook";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import prisma from "../../../lib/prisma";
+
+interface ExtendedProfile extends OAuthProfile {
+  first_name?: string;
+  last_name?: string;
+}
 
 export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
@@ -25,7 +31,7 @@ export const authOptions: NextAuthOptions = {
   ],
   adapter: PrismaAdapter(prisma),
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, profile }) {
       try {
         if (!user.email) return false;
 
@@ -35,14 +41,15 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!existingUser) {
+          const socialProfile = profile as ExtendedProfile;
           await prisma.user.create({
             data: {
               email: user.email,
               name: user.name || "",
               profile: {
                 create: {
-                  firstName: (profile as any)?.first_name || "",
-                  lastName: (profile as any)?.last_name || "",
+                  firstName: socialProfile?.first_name || "",
+                  lastName: socialProfile?.last_name || "",
                   phoneNumber: "",
                   currency: "USD",
                 }

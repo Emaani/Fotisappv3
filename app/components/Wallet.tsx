@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState,  useCallback } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
@@ -26,15 +26,9 @@ export default function Wallet({ userId }: WalletProps) {
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('card');
 
-  useEffect(() => {
-    if (!userId) {
-      router.push('/Login');
-      return;
-    }
-    fetchWalletData();
-  }, [userId, router]);
 
-  const fetchWalletData = async () => {
+
+  const fetchWalletData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError('');
@@ -53,7 +47,7 @@ export default function Wallet({ userId }: WalletProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId, router]);
 
   const handleAddFunds = async (e: React.FormEvent) => {
     e.preventDefault();
