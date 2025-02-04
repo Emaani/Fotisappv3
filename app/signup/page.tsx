@@ -74,8 +74,12 @@ const SignUpPage = () => {
       localStorage.setItem("token", response.data.token);
       
       router.push("/ProfileSetup");
-    } catch (error: any) {
-      setError(error.response?.data?.message || "An error occurred during signup");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     } finally {
       setIsLoading(false);
     }

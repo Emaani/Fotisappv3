@@ -2,15 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import CommoditySelection from '../components/CommoditySelection';
-import CommodityDetails from '../components/TradeCommodityDetails';
 import Wallet from '../components/Wallet';
-import { useCommodityPrice } from '../hooks/useCommodityPrice';
-import { useTokenBalance } from '../hooks/useTokenBalance';
-import { useTokenPurchase } from '../hooks/useTokenPurchase';
-import { purchaseTokens, cashOutTokens } from '../api/MobileMoneyAPI/MobileMoneyAPI';
 import CommodityList from '../components/CommodityList';
 import axios from 'axios';
+import type { WalletResponse, TradeResponse, TokenPurchaseResponse } from '@/types/api';
 
 interface CommodityData {
   name: string;
@@ -72,18 +67,17 @@ const TradeCommoditiesPage: React.FC = () => {
 
   const fetchWalletData = async (userId: string) => {
     try {
-      const response = await axios.get(`/api/wallet/${userId}`);
+      const response = await axios.get<WalletResponse>(`/api/wallet/${userId}`);
       if (response.data.success) {
         setWalletData({
           balance: response.data.balance,
-          currency: {
-            code: response.data.currency.code,
-            symbol: response.data.currency.symbol
-          }
+          currency: response.data.currency
         });
       }
     } catch (error) {
-      console.error('Failed to fetch wallet data:', error);
+      if (error instanceof Error) {
+        console.error('Failed to fetch wallet data:', error.message);
+      }
     }
   };
 
@@ -101,7 +95,7 @@ const TradeCommoditiesPage: React.FC = () => {
 
   const handleBuyCommodity = async (commodity: string, quantity: number, totalCost: number) => {
     try {
-      const response = await axios.post('/api/trade/buy', {
+      const response = await axios.post<TradeResponse>('/api/trade/buy', {
         userId,
         commodity,
         quantity,
@@ -111,11 +105,13 @@ const TradeCommoditiesPage: React.FC = () => {
       if (response.data.success) {
         setWalletData(prev => ({
           ...prev,
-          balance: prev.balance - totalCost
+          balance: response.data.newBalance
         }));
       }
     } catch (error) {
-      console.error('Failed to buy commodity:', error);
+      if (error instanceof Error) {
+        console.error('Failed to buy commodity:', error.message);
+      }
     }
   };
 
@@ -144,7 +140,7 @@ const TradeCommoditiesPage: React.FC = () => {
     if (isNaN(amount) || amount <= 0) return;
 
     try {
-      const response = await axios.post('/api/wallet/buy-tokens', {
+      const response = await axios.post<TokenPurchaseResponse>('/api/wallet/buy-tokens', {
         userId,
         amount
       });
@@ -152,13 +148,15 @@ const TradeCommoditiesPage: React.FC = () => {
       if (response.data.success) {
         setWalletData(prev => ({
           ...prev,
-          balance: prev.balance + amount
+          balance: response.data.newBalance
         }));
         setShowTokenModal(false);
         setTokenAmount('');
       }
     } catch (error) {
-      console.error('Failed to buy tokens:', error);
+      if (error instanceof Error) {
+        console.error('Failed to buy tokens:', error.message);
+      }
     }
   };
 

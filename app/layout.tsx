@@ -9,7 +9,7 @@ import { Suspense } from 'react';
 import { AuthProvider } from "./providers/AuthProvider";
 import { Analytics } from '@vercel/analytics/react';
 
-const inter = Inter({ subsets: ['latin'] });
+const _inter = Inter({ subsets: ['latin'] });
 const roboto = Roboto({ 
   weight: ['400', '500', '700'],
   subsets: ['latin'],

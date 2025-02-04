@@ -74,13 +74,13 @@ export async function POST(req: NextRequest) {
       message: 'Profile updated successfully' 
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Profile setup error:', error);
     return NextResponse.json(
       { 
         success: false, 
         message: 'Failed to update profile',
-        error: error.message 
+        error: error instanceof Error ? error.message : 'An unknown error occurred' 
       },
       { status: 500 }
     );

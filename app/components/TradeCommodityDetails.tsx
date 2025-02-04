@@ -29,9 +29,9 @@ const TradeCommodityDetails: React.FC<CommodityDetailsProps> = ({
     setTradeAmount(amount);
   };
 
-  const handleBuyCommodity = async () => {
-    if (tradeAmount <= amountInStock) {
-      setAmountInStock(amountInStock - tradeAmount);
+  const _handleBuyCommodity = async (commodity: string, quantity: number) => {
+    if (quantity <= amountInStock) {
+      setAmountInStock(amountInStock - quantity);
       await onPurchase('buy'); // Use onPurchase here
     } else {
       alert('Insufficient stock!');

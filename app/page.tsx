@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Pie } from 'react-chartjs-2';
-import { Chart as ChartJS } from 'chart.js';
 import CommodityDetailsPopup from './components/CommodityDetailsPopup';
 import { chartOptions } from './lib/chartConfig';
 import { useRouter } from 'next/navigation';
@@ -95,10 +94,7 @@ const trendsWithHistory = [
 ];
 
 // Define the custom green color to match the logo
-const customGreen = {
-  600: '#2A9D8F', // Base green color matching the logo
-  700: '#238579', // Darker shade for hover states
-};
+const _customGreen = '#4CAF50';
 
 export default function Home() {
   const router = useRouter();

@@ -3,7 +3,7 @@ import { prisma } from '@/app/lib/prisma';
 
 export async function POST(request: Request) {
   try {
-    const { userId, amount, paymentMethod } = await request.json();
+    const { userId, amount, _paymentMethod } = await request.json();
 
     // Here you would integrate with your payment provider
     // For now, we'll just update the balance directly

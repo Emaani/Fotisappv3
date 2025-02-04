@@ -18,9 +18,9 @@ export const useTokenPurchase = () => {
       } else {
         throw new Error('Invalid purchase amount');
       }
-    } catch (err: any) {
+    } catch (error: { message?: string; response?: { data?: { message?: string } } }) {
       setPurchaseSuccess(false);
-      setError(err.message || 'An error occurred during the purchase');
+      setError(error.message || 'An error occurred during the purchase');
     } finally {
       setLoading(false);
     }

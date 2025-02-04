@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 
@@ -29,7 +28,7 @@ const SUPPORTED_CURRENCIES = [
 
 export default function ProfileSetup() {
   const router = useRouter();
-  const [userId, setUserId] = useState<string | null>(null);
+  const _userId = localStorage.getItem('userId');
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<ProfileFormData>({
@@ -46,13 +45,11 @@ export default function ProfileSetup() {
 
   useEffect(() => {
     // Get userId from storage
-    const storedUserId = localStorage.getItem('userId');
-    if (!storedUserId) {
+    if (!_userId) {
       router.push('/Login');
       return;
     }
-    setUserId(storedUserId);
-  }, [router]);
+  }, [router, _userId]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -147,13 +144,10 @@ export default function ProfileSetup() {
       } else {
         throw new Error(response.data.message || 'Failed to update profile');
       }
-    } catch (error: any) {
-      console.error('Profile setup error:', error);
-      setError(
-        error.response?.data?.message || 
-        error.message || 
-        'Failed to complete profile setup'
-      );
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      }
     } finally {
       setIsLoading(false);
     }

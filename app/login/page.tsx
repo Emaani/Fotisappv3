@@ -90,10 +90,11 @@ const LoginPage = () => {
       const returnUrl = localStorage.getItem('loginReturnUrl') || '/TradeCommodities';
       localStorage.removeItem('loginReturnUrl');
       router.push(isProfileComplete ? returnUrl : '/ProfileSetup');
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Login failed. Please try again.';
-      setError(errorMessage);
-      console.error('Login error:', errorMessage);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      }
+      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }

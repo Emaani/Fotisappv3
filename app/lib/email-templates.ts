@@ -1,3 +1,14 @@
+interface EmailParams {
+  to: string;
+  subject: string;
+  template: string;
+  context: Record<string, unknown>;
+}
+
+export const sendEmail = async (_params: EmailParams) => {
+  // ... existing code ...
+};
+
 export const emailTemplates = {
   welcome: (name: string) => ({
     subject: 'Welcome to Fotis Agro Trading Platform',
@@ -45,4 +56,17 @@ export const emailTemplates = {
   }),
 
   // Add other email templates
+};
+
+// Create proper error context interface
+interface ErrorContext {
+  error: Error;
+  timestamp: string;
+  stackTrace?: string;
+  userId?: string;
+}
+
+// Update error notification signature
+export const sendErrorNotification = async (context: ErrorContext) => {
+  // ... existing code ...
 }; 

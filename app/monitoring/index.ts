@@ -1,4 +1,3 @@
-import { Analytics } from '@vercel/analytics/react';
 import * as Sentry from '@sentry/nextjs';
 
 export function initMonitoring() {

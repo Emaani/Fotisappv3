@@ -1,11 +1,28 @@
 'use client';
 
-import { useState,  useCallback } from 'react';
+import { useState,  useCallback, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
+interface Transaction {
+  id: string;
+  amount: number;
+  type: 'deposit' | 'withdrawal';
+  date: string;
+  // Add additional fields as needed
+}
+
 interface WalletProps {
-  userId: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  balance: {
+    amount: number;
+    currency: string;
+  };
+  transactions: Transaction[];
 }
 
 interface WalletData {
@@ -25,8 +42,7 @@ export default function Wallet({ userId }: WalletProps) {
   const [showAddFunds, setShowAddFunds] = useState(false);
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('card');
-
-
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const fetchWalletData = useCallback(async () => {
     try {
@@ -48,6 +64,18 @@ export default function Wallet({ userId }: WalletProps) {
       setIsLoading(false);
     }
   }, [userId, router]);
+
+  useEffect(() => {
+    const loadTransactions = async () => {
+      try {
+        const response = await axios.get<{ transactions: Transaction[] }>(`/api/transactions/${userId}`);
+        setTransactions(response.data.transactions);
+      } catch (error) {
+        console.error('Error loading transactions:', error instanceof Error ? error.message : 'Unknown error');
+      }
+    };
+    loadTransactions();
+  }, [userId]);
 
   const handleAddFunds = async (e: React.FormEvent) => {
     e.preventDefault();
