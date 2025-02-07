@@ -1,14 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server'; 
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { Secret } from 'jsonwebtoken';
 import { findUserByEmail } from '@/app/api/auth/userService';
 import prisma from '@/app/lib/prisma';
 import { setAuthCookies } from '@/server/utils/authUtils';
 
+// Ensure secrets are defined
+if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
+  throw new Error('JWT_SECRET and JWT_REFRESH_SECRET must be defined in environment variables');
+}
+
 // Environment variables for secrets
-const TOKEN_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-const REFRESH_TOKEN_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret';
+const TOKEN_SECRET: Secret = process.env.JWT_SECRET; 
+const REFRESH_TOKEN_SECRET: Secret = process.env.JWT_REFRESH_SECRET;
 const ACCESS_TOKEN_EXPIRATION = '24h'; // Default expiration
 const REFRESH_TOKEN_EXPIRATION = '7d'; // Refresh token expiration
 

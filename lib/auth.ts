@@ -1,10 +1,10 @@
-import { AuthOptions } from 'next-auth';
-import FacebookProvider from 'next-auth/providers/facebook';
-import GoogleProvider from 'next-auth/providers/google';
-import { PrismaAdapter } from '@auth/prisma-adapter';
-import prisma from './prisma';
+import type { NextAuthOptions } from "next-auth";
+import FacebookProvider from "next-auth/providers/facebook";
+import GoogleProvider from "next-auth/providers/google";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import prisma from "@/lib/prisma";
 
-export const authOptions: AuthOptions = {
+export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
   providers: [
     FacebookProvider({
@@ -34,31 +34,31 @@ export const authOptions: AuthOptions = {
         });
 
         if (!existingUser) {
-          const socialProfile = profile as { first_name?: string; last_name?: string };
+          const socialProfile = profile as ExtendedProfile;
           await prisma.user.create({
             data: {
               email: user.email,
-              name: user.name || '',
+              name: user.name || "",
               profile: {
                 create: {
-                  firstName: socialProfile?.first_name || '',
-                  lastName: socialProfile?.last_name || '',
-                  phoneNumber: '',
-                  currency: 'USD',
-                },
+                  firstName: socialProfile?.first_name || "",
+                  lastName: socialProfile?.last_name || "",
+                  phoneNumber: "",
+                  currency: "USD",
+                }
               },
               wallet: {
                 create: {
                   balance: 0.0,
-                  currency: 'USD',
-                },
-              },
+                  currency: "USD",
+                }
+              }
             },
           });
         }
         return true;
       } catch (error) {
-        console.error('Error in signIn callback:', error);
+        console.error("Error in signIn callback:", error);
         return false;
       }
     },

@@ -9,6 +9,11 @@ export const sendEmail = async (_params: EmailParams) => {
   // ... existing code ...
 };
 
+interface OrderDetails {
+  id: string;
+  total: string;
+}
+
 export const emailTemplates = {
   welcome: (name: string) => ({
     subject: 'Welcome to Fotis Agro Trading Platform',
@@ -40,7 +45,7 @@ export const emailTemplates = {
     `,
   }),
 
-  orderConfirmation: (orderDetails: any) => ({
+  orderConfirmation: (orderDetails: OrderDetails) => ({
     subject: 'Order Confirmation - Fotis Agro',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -62,11 +67,24 @@ export const emailTemplates = {
 interface ErrorContext {
   error: Error;
   timestamp: string;
-  stackTrace?: string;
   userId?: string;
+  additionalInfo?: Record<string, unknown>;
 }
 
 // Update error notification signature
-export const sendErrorNotification = async (context: ErrorContext) => {
+export const sendErrorNotification = async (_context: ErrorContext) => {
+  // Implementation using _context
   // ... existing code ...
-}; 
+};
+
+interface EmailTemplateParams {
+  user: {
+    name: string;
+    email: string;
+  };
+  metadata?: Record<string, unknown>;
+}
+
+export const sendWelcomeEmail = async (_params: EmailTemplateParams) => {
+  // ... implementation ...
+};

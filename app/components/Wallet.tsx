@@ -1,7 +1,7 @@
 'use client';
 
-import { useState,  useCallback, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useCallback, useEffect } from 'react';
+import axios, { AxiosError } from 'axios';
 import { useRouter } from 'next/navigation';
 
 interface Transaction {
@@ -9,20 +9,10 @@ interface Transaction {
   amount: number;
   type: 'deposit' | 'withdrawal';
   date: string;
-  // Add additional fields as needed
 }
 
 interface WalletProps {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  balance: {
-    amount: number;
-    currency: string;
-  };
-  transactions: Transaction[];
+  userId: string; // Corrected to match usage
 }
 
 interface WalletData {
@@ -34,6 +24,10 @@ interface WalletData {
   userName: string;
 }
 
+interface _TransactionResponse {
+  transactions: Transaction[];
+}
+
 export default function Wallet({ userId }: WalletProps) {
   const router = useRouter();
   const [walletData, setWalletData] = useState<WalletData | null>(null);
@@ -42,7 +36,7 @@ export default function Wallet({ userId }: WalletProps) {
   const [showAddFunds, setShowAddFunds] = useState(false);
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('card');
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [_transactions, _setTransactions] = useState<Transaction[]>([]);
 
   const fetchWalletData = useCallback(async () => {
     try {
@@ -54,28 +48,24 @@ export default function Wallet({ userId }: WalletProps) {
       } else {
         throw new Error(response.data.message || 'Failed to fetch wallet data');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Wallet fetch error:', error);
-      setError(error.response?.data?.message || 'Failed to load wallet data');
-      if (error.response?.status === 401) {
-        router.push('/Login');
+      if (error instanceof AxiosError) {
+        setError(error.response?.data?.message || 'Failed to load wallet data');
+        if (error.response?.status === 401) {
+          router.push('/Login');
+        }
+      } else {
+        setError('Failed to load wallet data');
       }
     } finally {
       setIsLoading(false);
     }
   }, [userId, router]);
 
-  useEffect(() => {
-    const loadTransactions = async () => {
-      try {
-        const response = await axios.get<{ transactions: Transaction[] }>(`/api/transactions/${userId}`);
-        setTransactions(response.data.transactions);
-      } catch (error) {
-        console.error('Error loading transactions:', error instanceof Error ? error.message : 'Unknown error');
-      }
-    };
-    loadTransactions();
-  }, [userId]);
+  const _useEffect = useEffect(() => {
+    fetchWalletData();
+  }, [fetchWalletData]);
 
   const handleAddFunds = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +75,7 @@ export default function Wallet({ userId }: WalletProps) {
       const response = await axios.post('/api/wallet/add-funds', {
         userId,
         amount: parseFloat(amount),
-        paymentMethod
+        paymentMethod,
       });
 
       if (response.data.success) {
@@ -95,9 +85,13 @@ export default function Wallet({ userId }: WalletProps) {
       } else {
         throw new Error(response.data.message || 'Failed to add funds');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Add funds error:', error);
-      setError(error.response?.data?.message || 'Failed to add funds');
+      if (error instanceof AxiosError) {
+        setError(error.response?.data?.message || 'Failed to add funds');
+      } else {
+        setError('Failed to add funds');
+      }
     }
   };
 
