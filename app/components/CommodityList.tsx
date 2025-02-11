@@ -13,10 +13,7 @@ interface CommodityData {
 interface CommodityListProps {
   commodities?: CommodityData[];
   walletBalance: number;
-  currency: {
-    code: string;
-    symbol: string;
-  };
+  currency: string;
   onBuy: (commodity: string, quantity: number, totalCost: number) => void;
   onSell: (commodity: string, quantity: number, totalValue: number) => void;
 }
@@ -24,7 +21,7 @@ interface CommodityListProps {
 export default function CommodityList({ 
   commodities = [], 
   walletBalance = 0,
-  currency = { code: 'USD', symbol: '$' },
+  currency = 'USD',
   onBuy,
   onSell
 }: CommodityListProps) {
@@ -41,18 +38,18 @@ export default function CommodityList({
 
   const formatCurrency = (amount: number): string => {
     try {
-      if (!currency?.code) {
+      if (!currency) {
         return `$${formatNumber(amount)}`;
       }
       
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: currency.code,
+        currency: currency,
         currencyDisplay: 'narrowSymbol',
       }).format(amount);
     } catch (error) {
       console.error('Currency formatting error:', error);
-      return `${currency?.symbol || '$'}${formatNumber(amount)}`;
+      return `$${formatNumber(amount)}`;
     }
   };
 

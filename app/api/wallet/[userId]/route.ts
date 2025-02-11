@@ -1,32 +1,21 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 
+
 export async function GET(
   request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    // Ensure params is properly awaited
-    const { userId } = await Promise.resolve(params);
-    
+    // Use direct string validation if needed
+    const userId = params.userId;
     if (!userId) {
-      return NextResponse.json(
-        { message: 'User ID is required' },
-        { status: 400 }
-      );
-    }
-
-    const parsedUserId = parseInt(userId);
-    if (isNaN(parsedUserId)) {
-      return NextResponse.json(
-        { message: 'Invalid user ID format' },
-        { status: 400 }
-      );
+      return errorResponse('User ID required', 400);
     }
 
     // First, check if user exists
     const user = await prisma.user.findUnique({
-      where: { id: parsedUserId },
+      where: { id: params.userId },
       include: {
         profile: true,
       },
@@ -41,11 +30,9 @@ export async function GET(
 
     // Find or create wallet
     const wallet = await prisma.wallet.upsert({
-      where: { 
-        userId: parsedUserId 
-      },
+      where: { userId: params.userId },
       create: {
-        userId: parsedUserId,
+        userId: params.userId,
         balance: 0,
         currency: 'USD'
       },
@@ -82,4 +69,11 @@ function getCurrencySymbol(currencyCode: string): string {
     'BIF': 'FBu',
   };
   return symbols[currencyCode] || currencyCode;
-} 
+}
+
+function errorResponse(message: string, status: number): NextResponse {
+  return NextResponse.json(
+    { message },
+    { status }
+  );
+}

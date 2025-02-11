@@ -20,7 +20,9 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"],
+      "@/types": ["./types/index.ts"],
+      "@/lib/*": ["./src/lib/*"]
     },
     "plugins": [
       {

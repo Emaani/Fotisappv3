@@ -24,7 +24,7 @@ export async function validateJWT(req: NextRequest) {
 
   try {
     // Verify the JWT token
-    const payload = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
+    const payload = jwt.verify(token, SECRET_KEY as string) as jwt.JwtPayload;
 
     // Optionally validate specific claims (e.g., issuer, audience)
     if (!payload || !payload.id) {
@@ -41,7 +41,7 @@ export async function validateJWT(req: NextRequest) {
       errorMessage = "Token is invalid.";
     }
 
-    console.error("JWT validation error:", error.message);
+    console.error("JWT validation error:", error instanceof Error ? error.message : 'Unknown error');
     return { valid: false, error: errorMessage };
   }
 }

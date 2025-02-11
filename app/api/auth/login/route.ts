@@ -1,95 +1,71 @@
-import { NextRequest, NextResponse } from 'next/server'; 
-import { z } from 'zod';
-import bcrypt from 'bcryptjs';
-import jwt, { Secret } from 'jsonwebtoken';
-import { findUserByEmail } from '@/app/api/auth/userService';
-import prisma from '@/app/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 import { setAuthCookies } from '@/server/utils/authUtils';
+import * as jwt from 'jsonwebtoken';
 
-// Ensure secrets are defined
+// Ensure JWT secret is defined
 if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
-  throw new Error('JWT_SECRET and JWT_REFRESH_SECRET must be defined in environment variables');
+  throw new Error('JWT secrets must be defined in environment variables');
 }
 
-// Environment variables for secrets
-const TOKEN_SECRET: Secret = process.env.JWT_SECRET; 
-const REFRESH_TOKEN_SECRET: Secret = process.env.JWT_REFRESH_SECRET;
-const ACCESS_TOKEN_EXPIRATION = '24h'; // Default expiration
-const REFRESH_TOKEN_EXPIRATION = '7d'; // Refresh token expiration
+// Initialize Prisma client
+const prisma = new PrismaClient();
 
-// Schema for request validation
-const loginSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  rememberMe: z.boolean().optional(),
-});
-
-// Function to create an access token
-function createToken(userId: string, email: string, duration: string) {
-  return jwt.sign({ userId, email }, TOKEN_SECRET, { expiresIn: duration });
+// Token generation helper functions
+function createAccessToken(userId: string, email: string): string {
+  return jwt.sign(
+    { userId, email },
+    process.env.JWT_SECRET!,
+    { expiresIn: '24h' }
+  );
 }
 
-// Function to create a refresh token
-function createRefreshToken(userId: string) {
-  return jwt.sign({ userId }, REFRESH_TOKEN_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRATION });
-}
-
-export async function POST(req: NextRequest) {
+async function POST(req: NextRequest) {
   try {
-    // Parse and validate request body
-    const body = await req.json();
-    const validatedData = loginSchema.parse(body);
+    // Extract refresh token from cookies
+    const refreshToken = req.cookies.get('refreshToken')?.value;
 
-    // Check if the user exists
-    const user = await findUserByEmail(validatedData.email);
-    if (!user) {
-      return NextResponse.json({ message: 'Invalid email or password' }, { status: 401 });
+    if (!refreshToken) {
+      return NextResponse.json({ message: 'No refresh token provided' }, { status: 401 });
     }
 
-    // Verify the password
-    const isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
-    if (!isPasswordValid) {
-      return NextResponse.json({ message: 'Invalid email or password' }, { status: 401 });
+    // Verify the refresh token
+    let decoded: { userId: string }; // Explicitly type as string
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as { userId: string };
+    } catch (error) {
+      return NextResponse.json({ message: 'Invalid refresh token' }, { status: 401 });
     }
 
-    // Generate tokens
-    const tokenDuration = validatedData.rememberMe ? '30d' : ACCESS_TOKEN_EXPIRATION;
-    const token = createToken(user.id, user.email, tokenDuration);
-    const refreshToken = createRefreshToken(user.id);
-
-    // Store refresh token in the database
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { refreshToken },
+    // Find user with matching refresh token
+    const user = await prisma.user.findUnique({ 
+      where: { 
+        id: decoded.userId // Ensure userId is treated as a string
+      } 
     });
 
-    // Create a response object
+    if (!user || user.refreshToken !== refreshToken) {
+      return NextResponse.json({ message: 'Invalid refresh token' }, { status: 401 });
+    }
+
+    // Generate new access token
+    const newAccessToken = createAccessToken(user.id, user.email);
+
+    // Create response with new token
     const response = NextResponse.json({
-      token,
+      token: newAccessToken,
       userId: user.id,
-      isProfileComplete: !!user.profile,
-      message: 'Login successful',
+      message: 'Token refreshed successfully'
     });
 
-    // Set auth cookies
-    setAuthCookies(response, token, refreshToken, validatedData.rememberMe);
+    // Set new auth cookies
+    setAuthCookies(response, newAccessToken, refreshToken);
 
     return response;
   } catch (error) {
-    console.error('Login error:', error);
-
-    // Handle validation errors
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          message: 'Validation error',
-          errors: error.errors.map((err) => ({ field: err.path[0], message: err.message })),
-        },
-        { status: 400 }
-      );
-    }
-
-    // Handle unexpected errors
+    console.error('Token refresh error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }
+
+export { POST };

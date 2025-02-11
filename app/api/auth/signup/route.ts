@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import prisma from '@/app/lib/prisma'
+import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
-import { sendEmail, emailTemplates } from '@/app/lib/email'
+import { sendEmail, emailTemplates } from '@/lib/email'
 import { sign } from 'jsonwebtoken'
+
+const prisma = new PrismaClient()
 
 const signupSchema = z.object({
   email: z.string().email(),

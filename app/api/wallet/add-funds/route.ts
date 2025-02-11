@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     // Here you would integrate with your payment provider
     // For now, we'll just update the balance directly
     const updatedWallet = await prisma.wallet.update({
-      where: { userId: Number(userId) },
+      where: { userId: userId },
       data: {
         balance: {
           increment: amount

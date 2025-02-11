@@ -7,6 +7,8 @@ import CommodityDetailsPopup from './components/CommodityDetailsPopup';
 import { chartOptions } from './lib/chartConfig';
 import { useRouter } from 'next/navigation';
 import { useTheme } from './providers/ThemeProvider';
+import { ChartEvent, ActiveElement } from 'chart.js';
+import { TooltipItem } from 'chart.js';
 
 interface MarketUpdate {
   time: string;
@@ -18,16 +20,6 @@ interface CommodityTrend {
   trend: number;
   change: string;
   status: 'up' | 'down' | 'stable';
-}
-
-interface ChartClickEvent {
-  type: string;
-  native: Event;
-}
-
-interface ChartElement {
-  index: number;
-  datasetIndex: number;
 }
 
 const trendsWithHistory = [
@@ -122,7 +114,10 @@ export default function Home() {
     router.push('/login?returnUrl=/TradeCommodities');
   };
 
-  const handleChartClick = (event: ChartClickEvent, elements: ChartElement[]) => {
+  const handleChartClick = (
+    event: ChartEvent,
+    elements: ActiveElement[]
+  ) => {
     if (elements.length > 0) {
       const index = elements[0].index;
       const selected = trendsWithHistory[index];
@@ -168,16 +163,16 @@ export default function Home() {
           padding: 20,
           font: {
             size: 14,
-            weight: 'bold'
+            weight: 'bold' as const
           }
         },
         position: 'bottom' as const
       },
       tooltip: {
         callbacks: {
-          label: (context: { label?: string; raw?: number }) => {
+          label: (context: TooltipItem<'pie'>) => {
             const label = context.label || '';
-            const value = context.raw || 0;
+            const value = context.parsed || 0;
             return `${label}: ${value.toFixed(1)}%`;
           }
         }

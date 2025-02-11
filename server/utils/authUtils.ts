@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
-export const createToken = (userId: number, email: string, expiresIn = '24h') => {
-  return jwt.sign({ userId, email }, process.env.JWT_SECRET!, { expiresIn });
-};
+export function createToken(userId: string, email: string): string {
+  return jwt.sign(
+    { userId, email },
+    process.env.JWT_SECRET!,
+    { expiresIn: '15m' }
+  );
+}
 
 export const createRefreshToken = (userId: number) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET!, { expiresIn: '60d' });

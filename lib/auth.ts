@@ -1,8 +1,15 @@
+// lib/auth.ts
 import type { NextAuthOptions } from "next-auth";
+import type { Profile as OAuthProfile } from "next-auth";
 import FacebookProvider from "next-auth/providers/facebook";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import prisma from "@/lib/prisma";
+import prisma from "./prisma";
+
+interface ExtendedProfile extends OAuthProfile {
+  first_name?: string;
+  last_name?: string;
+}
 
 export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
@@ -39,6 +46,7 @@ export const authOptions: NextAuthOptions = {
             data: {
               email: user.email,
               name: user.name || "",
+              password: "",
               profile: {
                 create: {
                   firstName: socialProfile?.first_name || "",
@@ -85,3 +93,14 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
+
+// Add type safety for the session
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      name?: string | null;
+    }
+  }
+}

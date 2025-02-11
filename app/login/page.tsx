@@ -5,7 +5,6 @@ import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FaGoogle, FaFacebook } from 'react-icons/fa';
-import { Alert, AlertDescription } from '@chakra-ui/react';
 
 interface LoginFormData {
   email: string;
@@ -115,9 +114,9 @@ const LoginPage = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {error && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+              <p>{error}</p>
+            </div>
           )}
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>

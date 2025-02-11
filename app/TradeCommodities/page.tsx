@@ -5,7 +5,11 @@ import { useRouter } from 'next/navigation';
 import Wallet from '../components/Wallet';
 import CommodityList from '../components/CommodityList';
 import axios from 'axios';
-import type { WalletResponse, TradeResponse, TokenPurchaseResponse } from '@/types/api';
+import type { 
+  WalletResponse, 
+  TradeResponse, 
+  TokenPurchaseResponse 
+} from '@/types/api';
 
 interface CommodityData {
   name: string;
@@ -17,10 +21,7 @@ interface CommodityData {
 
 interface WalletData {
   balance: number;
-  currency: {
-    code: string;
-    symbol: string;
-  };
+  currency: string;
 }
 
 const TradeCommoditiesPage: React.FC = () => {
@@ -28,10 +29,7 @@ const TradeCommoditiesPage: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [walletData, setWalletData] = useState<WalletData>({
     balance: 0,
-    currency: {
-      code: 'USD',
-      symbol: '$'
-    }
+    currency: 'USD'
   });
   const [commodities] = useState<CommodityData[]>([
     { name: 'Soybeans', price: 2500, change: -0.14, changePercentage: -1.32, availableStock: 100 },
