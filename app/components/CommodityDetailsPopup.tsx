@@ -13,7 +13,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import type { Commodity } from '@/types'; // Adjust path as needed
+import type { Commodity } from '@/types/index';
 
 // Register Chart.js components
 ChartJS.register(

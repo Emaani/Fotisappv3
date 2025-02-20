@@ -1,7 +1,9 @@
-"use client";
-import { useSearchParams } from "next/navigation";
+'use client';
 
-export default function AuthError() {
+import React from 'react';
+import { useSearchParams } from 'next/navigation';
+
+export default function ErrorDisplay() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
 

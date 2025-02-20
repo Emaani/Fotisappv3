@@ -6,11 +6,12 @@ export interface WalletResponse {
 
 export interface TradeResponse {
   success: boolean;
+  message: string;
   newBalance: number;
 }
 
 export interface TokenPurchaseResponse {
   success: boolean;
-  tokens: number;
+  message: string;
   newBalance: number;
 } 

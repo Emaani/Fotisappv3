@@ -1,25 +1,26 @@
+// app/api/auth/[...nextauth]/route.ts
 import NextAuth from "next-auth";
-import type { NextAuthOptions } from "next-auth";
-import type { Profile as OAuthProfile } from "next-auth";
-import FacebookProvider from "next-auth/providers/facebook";
+import type { User } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import FacebookProvider from "next-auth/providers/facebook";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import prisma from "../../../lib/prisma";
+import prisma from "@/app/lib/prisma";
 
-interface ExtendedProfile extends OAuthProfile {
-  first_name?: string;
-  last_name?: string;
+// Fix the User type extension to be compatible with the base User interface
+interface AuthUser extends Omit<User, 'name'> {
+  email: string;
+  name?: string | null; // Matches the base User interface's name property type
 }
 
-const options: NextAuthOptions = {
-  debug: process.env.NODE_ENV === 'development',
+export const authOptions = {
+  debug: process.env.NODE_ENV === "development",
   providers: [
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID!,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
       authorization: {
         params: {
-          scope: 'email,public_profile',
+          scope: "email,public_profile",
         },
       },
     }),
@@ -33,19 +34,20 @@ const options: NextAuthOptions = {
   callbacks: {
     async signIn({ user, profile }) {
       try {
-        if (!user.email) return false;
+        const typedUser = user as AuthUser;
+        if (!typedUser.email) return false;
 
         const existingUser = await prisma.user.findUnique({
-          where: { email: user.email },
+          where: { email: typedUser.email },
           include: { profile: true },
         });
 
         if (!existingUser) {
-          const socialProfile = profile as ExtendedProfile;
+          const socialProfile = profile as { first_name?: string; last_name?: string };
           await prisma.user.create({
             data: {
-              email: user.email,
-              name: user.name || "",
+              email: typedUser.email,
+              name: typedUser.name || "",
               password: "oauth-account",
               profile: {
                 create: {
@@ -53,14 +55,14 @@ const options: NextAuthOptions = {
                   lastName: socialProfile?.last_name || "",
                   phoneNumber: "",
                   currency: "USD",
-                }
+                },
               },
               wallet: {
                 create: {
                   balance: 0.0,
                   currency: "USD",
-                }
-              }
+                },
+              },
             },
           });
         }
@@ -70,29 +72,29 @@ const options: NextAuthOptions = {
         return false;
       }
     },
-    async session({ session, token }) {
-      if (session.user && token.id) {
-        session.user = token.id;
+    async session({ session, user }) {
+      if (session.user) {
+        session.user.id = user.id;
       }
       return session;
     },
   },
   pages: {
-    signIn: '/login',
-    error: '/auth/error',
+    signIn: "/login",
+    error: "/auth/error",
   },
   cookies: {
     sessionToken: {
-      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+      name: `${process.env.NODE_ENV === "production" ? "__Secure-" : ""}next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
       },
     },
   },
 };
 
-const handler = NextAuth(options);
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

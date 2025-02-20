@@ -1,47 +1,24 @@
-import { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
+import { NextRequest, NextResponse } from 'next/server'
+import jwt from 'jsonwebtoken'
 
-const SECRET_KEY = process.env.JWT_SECRET;
-
-if (!SECRET_KEY) {
-  throw new Error("JWT_SECRET environment variable is not set.");
-}
-
-export async function validateJWT(req: NextRequest) {
-  // Retrieve the Authorization header
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) {
-    return { valid: false, error: "Authorization header is missing." };
-  }
-
-  // Check if the token follows the Bearer format
-  const tokenParts = authHeader.split(" ");
-  if (tokenParts.length !== 2 || tokenParts[0] !== "Bearer") {
-    return { valid: false, error: "Authorization header is malformed." };
-  }
-
-  const token = tokenParts[1];
-
+export async function validateJWT(request: NextRequest) {
   try {
-    // Verify the JWT token
-    const payload = jwt.verify(token, SECRET_KEY as string) as jwt.JwtPayload;
-
-    // Optionally validate specific claims (e.g., issuer, audience)
-    if (!payload || !payload.id) {
-      return { valid: false, error: "Invalid token payload." };
+    const token = request.headers.get('Authorization')?.replace('Bearer ', '')
+    
+    if (!token) {
+      return NextResponse.json(
+        { error: 'No token provided' },
+        { status: 401 }
+      )
     }
 
-    return { valid: true, payload };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!)
+    return decoded
+    
   } catch (error) {
-    // Handle JWT errors and return meaningful messages
-    let errorMessage = "Invalid or expired token.";
-    if (error instanceof jwt.TokenExpiredError) {
-      errorMessage = "Token has expired.";
-    } else if (error instanceof jwt.JsonWebTokenError) {
-      errorMessage = "Token is invalid.";
-    }
-
-    console.error("JWT validation error:", error instanceof Error ? error.message : 'Unknown error');
-    return { valid: false, error: errorMessage };
+    return NextResponse.json(
+      { error: 'Invalid token' },
+      { status: 401 }
+    )
   }
 }

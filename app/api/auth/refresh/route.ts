@@ -1,69 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { setAuthCookies, createToken } from '@/server/utils/authUtils';
 
-// Ensure JWT secrets are defined
-if (!process.env.JWT_REFRESH_SECRET || !process.env.JWT_SECRET) {
+const JWT_SECRET = process.env.JWT_SECRET || '';
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || '';
+
+// Move this check to server startup
+if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
   throw new Error('JWT secrets must be defined in environment variables');
 }
 
 // Import and initialize Prisma client correctly
 const prisma = new PrismaClient();
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    // Extract refresh token from cookies
-    const refreshToken = req.cookies.get('refreshToken')?.value;
-    
+    const refreshToken = request.headers.get('x-refresh-token');
+
     if (!refreshToken) {
-      return NextResponse.json({ message: 'Refresh token not found' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Refresh token is required' },
+        { status: 401 }
+      );
     }
 
-    // Verify refresh token
-    let decoded: { userId: string };
-    try {
-      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as { userId: string };
-    } catch (verifyError) {
-      return NextResponse.json({ message: 'Invalid refresh token' }, { status: 401 });
-    }
+    // Type assertion to handle the null case
+    const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as jwt.JwtPayload;
 
-    // Find user with matching refresh token
-    const user = await prisma.user.findUnique({ 
-      where: { id: decoded.userId } 
-    });
-
-    // Validate user and refresh token
-    if (!user || user.refreshToken !== refreshToken) {
-      return NextResponse.json({ message: 'Invalid refresh token' }, { status: 401 });
-    }
+    const signOptions: SignOptions = {
+      expiresIn: (process.env.JWT_ACCESS_EXPIRATION || '15m') as any,
+      algorithm: 'HS256'
+    };
 
     // Generate new access token
-    const newToken = createToken(user.id, user.email);
+    const accessToken = jwt.sign(
+      { id: decoded.id, email: decoded.email },
+      JWT_SECRET,
+      signOptions
+    );
 
-    // Create response with new token
-    const response = NextResponse.json({ 
-      token: newToken, 
-      userId: user.id,
-      message: 'Token refreshed successfully' 
+    return NextResponse.json({
+      accessToken,
+      message: 'Token refreshed successfully',
     });
-
-    // Set new auth cookies
-    setAuthCookies(response, newToken, refreshToken);
-
-    return response;
-
   } catch (error) {
     console.error('Token refresh error:', error);
-    
-    // Differentiate between different types of errors
-    if (error instanceof Error) {
-      return NextResponse.json({ 
-        message: 'Internal server error', 
-        details: error.message 
-      }, { status: 500 });
-    }
-
-    return NextResponse.json({ message: 'Unexpected error occurred' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Invalid or expired refresh token' },
+      { status: 401 }
+    );
   }
 }

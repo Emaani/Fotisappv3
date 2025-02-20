@@ -27,8 +27,7 @@ const SUPPORTED_CURRENCIES = [
 ];
 
 export default function ProfileSetup() {
-  const router = useRouter();
-  const _userId = localStorage.getItem('userId');
+  const [isClient, setIsClient] = useState(false);
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<ProfileFormData>({
@@ -38,18 +37,23 @@ export default function ProfileSetup() {
     address: '',
     city: '',
     country: '',
-    currency: 'USD', // Default currency
+    currency: 'USD',
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    // Get userId from storage
-    if (!_userId) {
-      router.push('/Login');
-      return;
+    setIsClient(true);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
     }
-  }, [router, _userId]);
+  }, [router]);
+
+  if (!isClient) {
+    return <div>Loading...</div>;
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

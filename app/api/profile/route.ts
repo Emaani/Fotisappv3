@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
-import { validateJWT } from "@/app/middleware/validateJWT";
+import prisma from "../../lib/prisma";
+import { validateJWT } from "../../middleware/validateJWT";
+import { JwtPayload } from "jsonwebtoken";
 
 export async function POST(req: NextRequest) {
   try {
     // Validate JWT and get user ID
     const validation = await validateJWT(req);
-    if (!validation.valid) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (validation instanceof NextResponse) {
+      return validation;
     }
 
-    const jwtUserId = validation.payload?.id;
+    const jwtUserId = (validation as JwtPayload).id;
     if (!jwtUserId) {
       return NextResponse.json(
         { success: false, message: 'User ID not found' },

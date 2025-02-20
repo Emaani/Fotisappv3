@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
@@ -63,11 +64,10 @@ export default function ResetPasswordForm() {
         <input
           type="password"
           id="password"
+          name="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          required
-          minLength={8}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
         />
       </div>
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/app/lib/prisma';
-import { uploadFile } from '@/app/lib/fileUpload';
+import prisma from "../../../lib/prisma";
+import { uploadFile } from "../../../lib/fileUpload";
 import { z } from 'zod';
 
 // Input validation schema

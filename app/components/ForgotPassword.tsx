@@ -8,7 +8,7 @@ export default function ForgotPasswordForm() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessage('');
     setError('');
@@ -17,7 +17,11 @@ export default function ForgotPasswordForm() {
       const response = await axios.post('/api/forgot-password', { email });
       setMessage(response.data.message);
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred');
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || 'An error occurred');
+      } else {
+        setError('An unexpected error occurred');
+      }
     }
   };
 
