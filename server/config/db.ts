@@ -68,7 +68,7 @@ export async function updateUserRefreshToken(email: string, refreshToken: string
 export async function getUserById(userId: number) {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: userId.toString() },
       include: { profile: true },
     });
     return user;
@@ -95,7 +95,7 @@ export async function createUserProfile(userId: number, profileData: {
   try {
     const profile = await prisma.profile.create({
       data: {
-        userId,
+        userId: userId.toString(),
         ...profileData,
       },
     });
@@ -114,7 +114,7 @@ export async function createUserProfile(userId: number, profileData: {
 export async function deleteUserById(userId: number) {
   try {
     const user = await prisma.user.delete({
-      where: { id: userId },
+      where: { id: userId.toString() },
     });
     return user;
   } catch (error) {

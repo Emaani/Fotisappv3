@@ -3,12 +3,13 @@
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
+    "types": ["axios"], // Added axios type definition
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node", // Changed to "node" for better compatibility
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -19,12 +20,11 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@/types/*": ["./src/types/*"],
-      "@/app/*": ["./app/*"]
+      "@/*": ["./src/*"], // Maps @/* to ./src/*
+      "@/app/*": ["./app/*"] // Maps @/app/* to ./app/*
     },
-    "baseUrl": ".",
-    "typeRoots": ["./types", "./node_modules/@types"]
+    "baseUrl": ".", // Base URL for path resolution
+    "typeRoots": ["./node_modules/@types"] // Removed "./types" to avoid conflicts
   },
   "include": [
     "next-env.d.ts",
@@ -36,4 +36,5 @@
     "lib/**/*"
   ],
   "exclude": ["node_modules"]
+
 }

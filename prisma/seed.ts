@@ -10,7 +10,7 @@ async function main() {
       email: 'admin@fotisagro.com',
       name: 'Admin User',
       role: 'admin',
-      // Add other required fields
+      password: 'password123', // Added required field
     },
   });
 }
