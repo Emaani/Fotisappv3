@@ -3,7 +3,7 @@
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
-    "types": ["axios"], // Added axios type definition
+    "types": [], 
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
