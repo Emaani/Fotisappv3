@@ -37,16 +37,52 @@ const trendsWithHistory = [
     trend: -2.5,
     change: '-2.5%',
     status: 'down',
-    historicalData: { price: [2300, 2350, 2325] }
+    price: 2325,
+    historicalData: {
+      price: [2300, 2350, 2325],
+      dates: ['2024-01', '2024-02', '2024-03'],
+      volume: '1.2M tons'
+    }
   },
+  
   {
     name: 'Coffee',
     trend: 1.8,
     change: '1.8%',
     status: 'up',
-    historicalData: { price: [1800, 1850, 1880] }
+    price: 1880,
+    historicalData: {
+      price: [1800, 1850, 1880],
+      dates: ['2024-01', '2024-02', '2024-03'],
+      volume: '850K tons'
+    }
   },
-  // Add more commodities as needed
+  
+  {
+    name: 'Sesame',
+    trend: 2.5,
+    change: '1.8%',
+    status: 'up',
+    price: 6000,
+    historicalData: {
+      price: [6000, 5500, 6500],
+      dates: ['2024-01', '2024-02', '2024-03'],
+      volume: '850K tons'
+    }
+  },
+
+  {
+  name: 'Sunflower',
+  trend: 1.5,
+  change: '2.0%',
+  status: 'up',
+  price: 1500,
+  historicalData: {
+    price: [1600, 1500, 2000],
+    dates: ['2024-01', '2024-02', '2024-03'],
+    volume: '850K tons'
+  }
+  },
 ];
 
 export default function Home() {

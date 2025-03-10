@@ -31,7 +31,12 @@ interface CommodityDetailsPopupProps {
   onClose: () => void;
 }
 
-export default function CommodityDetailsPopup({ commodity }: CommodityDetailsPopupProps) {
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+});
+
+export default function CommodityDetailsPopup({ commodity, onClose }: CommodityDetailsPopupProps) {
   const { theme } = useTheme();
 
   const chartData = {
