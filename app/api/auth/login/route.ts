@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { setAuthCookies } from '@/server/utils/authUtils';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
-// Ensure JWT secret is defined
-if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
-  throw new Error('JWT secrets must be defined in environment variables');
-}
-
-// Initialize Prisma client
 const prisma = new PrismaClient();
 
-// Token generation helper functions
 function createAccessToken(userId: string, email: string): string {
   return jwt.sign(
     { userId, email },
@@ -20,52 +14,75 @@ function createAccessToken(userId: string, email: string): string {
   );
 }
 
-async function POST(req: NextRequest) {
+export async function loginPOST(request: Request) {
   try {
-    // Extract refresh token from cookies
-    const refreshToken = req.cookies.get('refreshToken')?.value;
+    const { email, password } = await request.json();
 
-    if (!refreshToken) {
-      return NextResponse.json({ message: 'No refresh token provided' }, { status: 401 });
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: 'Email and password are required' },
+        { status: 400 }
+      );
     }
 
-    // Verify the refresh token
-    let decoded: { userId: string }; // Explicitly type as string
-    try {
-      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as { userId: string };
-    } catch (error) {
-      return NextResponse.json({ message: 'Invalid refresh token' }, { status: 401 });
-    }
-
-    // Find user with matching refresh token
-    const user = await prisma.user.findUnique({ 
-      where: { 
-        id: decoded.userId // Ensure userId is treated as a string
-      } 
+    const user = await prisma.user.findUnique({
+      where: { email },
     });
 
-    if (!user || user.refreshToken !== refreshToken) {
-      return NextResponse.json({ message: 'Invalid refresh token' }, { status: 401 });
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Invalid credentials' },
+        { status: 401 }
+      );
     }
 
-    // Generate new access token
-    const newAccessToken = createAccessToken(user.id, user.email);
+    const isValidPassword = await bcrypt.compare(password, user.password);
 
-    // Create response with new token
-    const response = NextResponse.json({
-      token: newAccessToken,
-      userId: user.id,
-      message: 'Token refreshed successfully'
+    if (!isValidPassword) {
+      return NextResponse.json(
+        { error: 'Invalid credentials' },
+        { status: 401 }
+      );
+    }
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is not defined');
+    }
+
+    const payload = {
+        userId: user.id,
+        email: user.email,
+        role: user.role
+    };
+
+    const token = jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      {
+        expiresIn: '24h',
+        algorithm: 'HS256'
+      }
+    );
+
+    return Response.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role
+      }
     });
 
-    // Set new auth cookies
-    setAuthCookies(response, newAccessToken, refreshToken);
-
-    return response;
   } catch (error) {
-    console.error('Token refresh error:', error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    console.error('Login error:', error);
+    return Response.json(
+      { error: 'Authentication failed' },
+      { status: 401 }
+    );
   }
+  return Response.json(
+    { error: 'Authentication failed' },
+    { status: 401 }
+  );
 }
-
-export { POST };

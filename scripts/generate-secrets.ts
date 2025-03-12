@@ -2,9 +2,12 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
-function generateSecret(length: number = 64): string {
-  return crypto.randomBytes(length).toString('hex');
-}
+const generateSecret = () => {
+  return crypto.randomBytes(32).toString('hex');
+};
+
+console.log('JWT_SECRET:', generateSecret());
+console.log('NEXTAUTH_SECRET:', generateSecret());
 
 function updateEnvFile() {
   const envPath = path.join(process.cwd(), '.env');
