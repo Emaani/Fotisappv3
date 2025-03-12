@@ -14,7 +14,7 @@ function createAccessToken(userId: string, email: string): string {
   );
 }
 
-export async function loginPOST(request: Request) {
+export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
 
