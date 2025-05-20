@@ -36,7 +36,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onCancelOrder, isLoading 
   if (orders.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
-        You don't have any orders yet.
+        You don&apos;t have any orders yet.
       </div>
     );
   }

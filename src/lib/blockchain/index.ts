@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { ethers, providers } from 'ethers';
 import CommodityTokenABI from '../../contracts/abis/CommodityToken.json';
 import TradingEngineABI from '../../contracts/abis/TradingEngine.json';
 
@@ -34,11 +34,11 @@ const NETWORK_CONFIG = {
  */
 export const getProvider = () => {
   if (typeof window !== 'undefined' && window.ethereum) {
-    return new ethers.BrowserProvider(window.ethereum);
+    return new ethers.providers.Web3Provider(window.ethereum);
   }
   
   // Fallback to a read-only provider
-  return new ethers.JsonRpcProvider(NETWORK_CONFIG.polygon.rpcUrls[0]);
+  return new ethers.providers.JsonRpcProvider(NETWORK_CONFIG.polygon.rpcUrls[0]);
 };
 
 /**
@@ -53,8 +53,8 @@ export const connectWallet = async () => {
     // Request account access
     await window.ethereum.request({ method: 'eth_requestAccounts' });
     
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
     const address = await signer.getAddress();
     
     return { signer, address };
@@ -101,7 +101,7 @@ export const switchToPolygon = async () => {
  */
 export const getCommodityTokenContract = async (
   tokenType: keyof typeof CONTRACT_ADDRESSES.commodityTokens,
-  signerOrProvider?: ethers.Signer | ethers.Provider
+  signerOrProvider?: ethers.Signer | providers.Provider
 ) => {
   const provider = signerOrProvider || getProvider();
   const tokenAddress = CONTRACT_ADDRESSES.commodityTokens[tokenType];
@@ -117,7 +117,7 @@ export const getCommodityTokenContract = async (
  * Get TradingEngine contract instance
  */
 export const getTradingEngineContract = async (
-  signerOrProvider?: ethers.Signer | ethers.Provider
+  signerOrProvider?: ethers.Signer | providers.Provider
 ) => {
   const provider = signerOrProvider || getProvider();
   const contractAddress = CONTRACT_ADDRESSES.tradingEngine;
@@ -145,8 +145,8 @@ export const createBuyOrder = async (
     throw new Error(`Contract address not found for ${tokenType}`);
   }
   
-  const amountWei = ethers.parseUnits(amount, 18);
-  const priceWei = ethers.parseUnits(price, 8); // 8 decimals for price
+  const amountWei = ethers.utils.parseUnits(amount, 18);
+  const priceWei = ethers.utils.parseUnits(price, 8); // 8 decimals for price
   
   const tx = await tradingEngine.createBuyOrder(tokenAddress, amountWei, priceWei);
   return await tx.wait();
@@ -170,8 +170,8 @@ export const createSellOrder = async (
   
   // First approve the trading engine to transfer tokens
   const token = await getCommodityTokenContract(tokenType, signer);
-  const amountWei = ethers.parseUnits(amount, 18);
-  const priceWei = ethers.parseUnits(price, 8); // 8 decimals for price
+  const amountWei = ethers.utils.parseUnits(amount, 18);
+  const priceWei = ethers.utils.parseUnits(price, 8); // 8 decimals for price
   
   const approveTx = await token.approve(await tradingEngine.getAddress(), amountWei);
   await approveTx.wait();
@@ -198,7 +198,7 @@ export const cancelOrder = async (
  */
 export const getUserOrders = async (
   userAddress: string,
-  signerOrProvider?: ethers.Signer | ethers.Provider
+  signerOrProvider?: ethers.Signer | ethers.providers.Provider
 ) => {
   const tradingEngine = await getTradingEngineContract(signerOrProvider);
   
@@ -222,11 +222,11 @@ export const getUserOrders = async (
         trader,
         tokenAddress,
         orderType: orderType === 0 ? 'BUY' : 'SELL',
-        amount: ethers.formatUnits(amount, 18),
-        price: ethers.formatUnits(price, 8),
+        amount: ethers.utils.formatUnits(amount, 18),
+        price: ethers.utils.formatUnits(price, 8),
         timestamp: new Date(Number(timestamp) * 1000),
         status: ['OPEN', 'FILLED', 'CANCELLED', 'EXPIRED'][Number(status)],
-        filledAmount: ethers.formatUnits(filledAmount, 18)
+        filledAmount: ethers.utils.formatUnits(filledAmount, 18)
       };
     })
   );
@@ -240,12 +240,11 @@ export const getUserOrders = async (
 export const getTokenBalance = async (
   tokenType: keyof typeof CONTRACT_ADDRESSES.commodityTokens,
   userAddress: string,
-  signerOrProvider?: ethers.Signer | ethers.Provider
+  signerOrProvider?: ethers.Signer | providers.Provider
 ) => {
   const token = await getCommodityTokenContract(tokenType, signerOrProvider);
-  
   const balance = await token.balanceOf(userAddress);
-  return ethers.formatUnits(balance, 18);
+  return ethers.utils.formatUnits(balance, 18);
 };
 
 /**
@@ -253,12 +252,17 @@ export const getTokenBalance = async (
  */
 export const getTokenPrice = async (
   tokenType: keyof typeof CONTRACT_ADDRESSES.commodityTokens,
-  signerOrProvider?: ethers.Signer | ethers.Provider
+  signerOrProvider?: ethers.Signer | providers.Provider
 ) => {
-  const token = await getCommodityTokenContract(tokenType, signerOrProvider);
+  const tradingEngine = await getTradingEngineContract(signerOrProvider);
+  const tokenAddress = CONTRACT_ADDRESSES.commodityTokens[tokenType];
   
-  const price = await token.pricePerUnit();
-  return ethers.formatUnits(price, 8);
+  if (!tokenAddress) {
+    throw new Error(`Contract address not found for ${tokenType}`);
+  }
+  
+  const price = await tradingEngine.getCommodityPrice(tokenAddress);
+  return ethers.utils.formatUnits(price, 8);
 };
 
 /**
@@ -266,7 +270,7 @@ export const getTokenPrice = async (
  */
 export const getTokenQuality = async (
   tokenType: keyof typeof CONTRACT_ADDRESSES.commodityTokens,
-  signerOrProvider?: ethers.Signer | ethers.Provider
+  signerOrProvider?: ethers.Signer | providers.Provider
 ) => {
   const token = await getCommodityTokenContract(tokenType, signerOrProvider);
   
