@@ -34,55 +34,49 @@ interface CommodityTrend {
 const trendsWithHistory = [
   {
     name: 'Soybeans',
-    trend: -2.5,
-    change: '-2.5%',
-    status: 'down',
-    price: 2325,
+    price: 2400,
     historicalData: {
-      price: [2300, 2350, 2325],
-      dates: ['2024-01', '2024-02', '2024-03'],
+      price: [2400],
+      dates: ['2024-03'],
       volume: '1.2M tons'
     }
   },
-  
   {
     name: 'Coffee',
-    trend: 1.8,
-    change: '1.8%',
-    status: 'up',
-    price: 1880,
+    price: 19000,
     historicalData: {
-      price: [1800, 1850, 1880],
-      dates: ['2024-01', '2024-02', '2024-03'],
+      price: [19000],
+      dates: ['2024-03'],
       volume: '850K tons'
     }
   },
-  
+  {
+    name: 'Maize',
+    price: 1000,
+    historicalData: {
+      price: [1000],
+      dates: ['2024-03'],
+      volume: '1.5M tons'
+    }
+  },
   {
     name: 'Sesame',
-    trend: 2.5,
-    change: '1.8%',
-    status: 'up',
-    price: 6000,
+    price: 5000,
     historicalData: {
-      price: [6000, 5500, 6500],
-      dates: ['2024-01', '2024-02', '2024-03'],
+      price: [5000],
+      dates: ['2024-03'],
       volume: '850K tons'
     }
   },
-
   {
-  name: 'Sunflower',
-  trend: 1.5,
-  change: '2.0%',
-  status: 'up',
-  price: 1500,
-  historicalData: {
-    price: [1600, 1500, 2000],
-    dates: ['2024-01', '2024-02', '2024-03'],
-    volume: '850K tons'
+    name: 'Sunflower',
+    price: 1500,
+    historicalData: {
+      price: [1500],
+      dates: ['2024-03'],
+      volume: '1.0M tons'
+    }
   }
-  },
 ];
 
 export default function Home() {
@@ -96,9 +90,11 @@ export default function Home() {
 
   const [trends] = useState<CommodityTrend[]>(
     trendsWithHistory.map(item => ({
-      ...item,
-      price: item.historicalData.price[item.historicalData.price.length - 1],
-      status: item.status as 'up' | 'down' | 'stable'
+      name: item.name,
+      price: item.price,
+      trend: 0,
+      change: '0%',
+      status: 'stable'
     }))
   );
 
@@ -168,14 +164,6 @@ export default function Home() {
                       }`}>
                         {item.name}: {currencyFormatter.format(item.price)}
                       </span>
-                      <span className={`ml-2 ${
-                        item.status === 'up' ? 'text-green-600' : 'text-red-500'
-                      } font-semibold`}>
-                        {item.trend > 0 ? '+' : ''}{item.trend} ({item.change})
-                        <span className="ml-1">
-                          {item.status === 'up' ? '↑' : '↓'}
-                        </span>
-                      </span>
                     </div>
                   ))}
                 </div>
@@ -218,7 +206,9 @@ export default function Home() {
           <CommodityDetailsPopup
             commodity={{
               ...selectedCommodity,
-              status: selectedCommodity.status as "down" | "up" | "stable",
+              trend: 0,
+              change: '0%',
+              status: 'stable',
               historicalData: {
                 price: selectedCommodity.historicalData.price,
                 demand: [],

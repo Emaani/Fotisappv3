@@ -3,13 +3,13 @@
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
-    "types": [], 
+    "types": ["chartjs-plugin-3d"], // Add the module name here
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node", // Changed to "node" for better compatibility
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -20,11 +20,11 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"], // Maps @/* to ./src/*
-      "@/app/*": ["./app/*"] // Maps @/app/* to ./app/*
+      "@/*": ["./src/*"],
+      "@/app/*": ["./app/*"]
     },
-    "baseUrl": ".", // Base URL for path resolution
-    "typeRoots": ["./node_modules/@types"] // Removed "./types" to avoid conflicts
+    "baseUrl": ".",
+    "typeRoots": ["./node_modules/@types", "./types"] // Add custom types folder
   },
   "include": [
     "next-env.d.ts",
@@ -33,8 +33,8 @@
     ".next/types/**/*.ts",
     "app/**/*",
     "src/**/*",
-    "lib/**/*"
+    "lib/**/*",
+    "types/**/*" // Add types folder to include
   ],
   "exclude": ["node_modules"]
-
 }

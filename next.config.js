@@ -18,10 +18,15 @@ const nextConfig = {
         hostname: 'your-storage-domain.com',
         pathname: '/profile-pictures/**',
       },
+      ...(process.env.NODE_ENV === 'development'
+        ? [{
+            protocol: 'http',
+            hostname: 'localhost',
+            pathname: '/**',
+          }]
+        : []),
     ],
-    domains: process.env.NODE_ENV === 'development' 
-      ? ['localhost'] 
-      : [],
+    domains: ['cdn.jsdelivr.net'],
   },
   async headers() {
     return [
@@ -49,6 +54,21 @@ const nextConfig = {
     ];
   },
   output: 'standalone',
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.(glsl|vs|fs|vert|frag)$/,
+      use: ['raw-loader']
+    });
+    return config;
+  },
+  experimental: {
+    appDir: true,
+  },
+  pwa: {
+    dest: 'public',
+    register: true,
+    skipWaiting: true,
+  },
 };
 
-module.exports = nextConfig; 
+module.exports = nextConfig;

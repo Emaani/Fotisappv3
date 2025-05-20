@@ -10,12 +10,13 @@ datasource db {
 }
 
 model Wallet {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  balance   Float    @default(0.0)
-  currency  String   @default("USD")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  balance         Float     @default(0.0)
+  currency        String    @default("USD")
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model User {
@@ -27,12 +28,17 @@ model User {
   resetTokenExpiry DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  role            String?   @default("user") @db.VarChar(50)
+  role            String    @default("user") @db.VarChar(50)
   refreshToken    String?   @default("")
   profile         Profile?
   wallet          Wallet?
-  accounts      Account[]
-  sessions      Session[]
+  blockchainWallets BlockchainWallet[]
+  accounts        Account[]
+  sessions        Session[]
+  kycStatus       KycStatus?
+  commodities     Commodity[]
+  orders          Order[]
+  transactions    Transaction[]
 }
 
 model Profile {
@@ -80,4 +86,229 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TradingData {
+  id      Int    @id @default(autoincrement())
+  month   String
+  value   Int
+  // Add other necessary fields
+}
+
+model BlockchainWallet {
+  id              String    @id @default(cuid())
+  userId          String
+  address         String    @unique
+  network         String    @default("polygon")
+  isVerified      Boolean   @default(false)
+  isPrimary       Boolean   @default(false)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model KycStatus {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  status          KycStatusType @default(NOT_SUBMITTED)
+  documentType    String?
+  documentId      String?
+  verificationDate DateTime?
+  rejectionReason String?
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum KycStatusType {
+  NOT_SUBMITTED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Commodity {
+  id              String    @id @default(cuid())
+  name            String
+  type            CommodityType
+  quantity        Float
+  quality         Int       @default(0) // 0-100 quality score
+  location        String?
+  harvestDate     DateTime?
+  expiryDate      DateTime?
+  ownerId         String
+  owner           User      @relation(fields: [ownerId], references: [id])
+  tokenAddress    String?   // Blockchain token address if tokenized
+  tokenId         String?   // Token ID if tokenized
+  isTokenized     Boolean   @default(false)
+  status          CommodityStatus @default(PENDING)
+  inspectionId    String?
+  inspection      Inspection? @relation(fields: [inspectionId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  orders          Order[]
+
+  @@index([ownerId])
+  @@index([type])
+  @@index([status])
+}
+
+enum CommodityType {
+  COFFEE_ROBUSTA
+  COFFEE_ARABICA
+  COCOA
+  SESAME
+  SUNFLOWER
+}
+
+enum CommodityStatus {
+  PENDING
+  INSPECTED
+  TOKENIZED
+  LISTED
+  SOLD
+  DELIVERED
+  REJECTED
+}
+
+model Inspection {
+  id              String    @id @default(cuid())
+  inspectorName   String
+  date            DateTime
+  location        String
+  qualityScore    Int       // 0-100 quality score
+  moistureContent Float?
+  impurities      Float?
+  notes           String?
+  status          InspectionStatus @default(PENDING)
+  documents       InspectionDocument[]
+  commodities     Commodity[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum InspectionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model InspectionDocument {
+  id              String    @id @default(cuid())
+  inspectionId    String
+  inspection      Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  documentType    String
+  documentUrl     String
+  uploadedAt      DateTime  @default(now())
+
+  @@index([inspectionId])
+}
+
+model Order {
+  id              String    @id @default(cuid())
+  orderId         String?   // Blockchain order ID if applicable
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  commodityId     String
+  commodity       Commodity @relation(fields: [commodityId], references: [id])
+  type            OrderType
+  quantity        Float
+  price           Float
+  totalAmount     Float
+  status          OrderStatus @default(PENDING)
+  expiryDate      DateTime?
+  blockchainTxHash String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  transactions    Transaction[]
+
+  @@index([userId])
+  @@index([commodityId])
+  @@index([status])
+}
+
+enum OrderType {
+  BUY
+  SELL
+}
+
+enum OrderStatus {
+  PENDING
+  OPEN
+  FILLED
+  PARTIALLY_FILLED
+  CANCELLED
+  EXPIRED
+  FAILED
+}
+
+model Transaction {
+  id              String    @id @default(cuid())
+  orderId         String
+  order           Order     @relation(fields: [orderId], references: [id])
+  buyerId         String
+  buyer           User      @relation(fields: [buyerId], references: [id])
+  amount          Float
+  fee             Float
+  status          TransactionStatus @default(PENDING)
+  paymentMethod   String?
+  paymentId       String?
+  blockchainTxHash String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([orderId])
+  @@index([buyerId])
+  @@index([status])
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model MarketData {
+  id              String    @id @default(cuid())
+  commodityType   CommodityType
+  price           Float
+  volume24h       Float
+  change24h       Float
+  timestamp       DateTime
+  source          String
+  createdAt       DateTime  @default(now())
+
+  @@index([commodityType])
+  @@index([timestamp])
+}
+
+model BlockchainTransaction {
+  id              String    @id @default(cuid())
+  txHash          String    @unique
+  network         String
+  fromAddress     String
+  toAddress       String
+  value           String
+  gasUsed         String?
+  status          BlockchainTxStatus @default(PENDING)
+  blockNumber     Int?
+  timestamp       DateTime?
+  functionName    String?
+  functionArgs    Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([txHash])
+  @@index([fromAddress])
+  @@index([toAddress])
+  @@index([status])
+}
+
+enum BlockchainTxStatus {
+  PENDING
+  CONFIRMED
+  FAILED
 }
