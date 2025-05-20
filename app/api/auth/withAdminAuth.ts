@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateJWT } from "@/app/middleware/validateJWT";
-import { JwtPayload } from "jsonwebtoken";
+
+interface JWTPayload {
+  id: string;
+  email: string;
+  role: string;
+  iat: number;
+  exp: number;
+}
 
 export async function withAdminAuth(req: NextRequest) {
   const validation = await validateJWT(req);
@@ -11,10 +18,10 @@ export async function withAdminAuth(req: NextRequest) {
   }
   
   // Handle case when validation is successful and has payload
-  if (typeof validation === 'object' && 'payload' in validation) {
-    const payload = validation.payload;
+  if (typeof validation === 'object' && !('error' in validation)) {
+    const payload = validation as JWTPayload;
     // Check if user is admin
-    if (payload?.role !== "admin") {
+    if (payload.role !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     
