@@ -59,6 +59,11 @@ const nextConfig = {
       test: /\.(glsl|vs|fs|vert|frag)$/,
       use: ['raw-loader']
     });
+    // Add JSON loader for contract ABIs
+    config.module.rules.push({
+      test: /\.json$/,
+      type: 'json',
+    });
     return config;
   },
   experimental: {

@@ -1,0 +1,35 @@
+[
+  {
+    "constant": true,
+    "inputs": [{"name": "commodityId", "type": "uint256"}],
+    "name": "getCommodityPrice",
+    "outputs": [{"name": "", "type": "uint256"}],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {"name": "commodityId", "type": "uint256"},
+      {"name": "amount", "type": "uint256"}
+    ],
+    "name": "buyCommodity",
+    "outputs": [{"name": "", "type": "bool"}],
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {"name": "commodityId", "type": "uint256"},
+      {"name": "amount", "type": "uint256"}
+    ],
+    "name": "sellCommodity",
+    "outputs": [{"name": "", "type": "bool"}],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+] 
